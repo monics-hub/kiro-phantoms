@@ -14,4 +14,5 @@ Great! Can you make the sharks (not kiro, niether the pelicans, just the sharks)
 
 Make kiro twice as big (just kiro). And make pelicans (just the pelicans) move twice as faster.
 
-Fine! Make sharks jump twice as far please. Also I will provide you 2 more sprites. One for hearts, and 1 for the clouds. The clouds should also move in the x-directions but very slowly. Also make the maximum number of pelicans appering simmultaneosly 4 and the number of sharks 2 appearing simmultaneosly. Make the clouds also bigger compared what with you have right now and make them move horizontally. 
+Fine! Make sharks jump twice as far please. Also I will provide you 2 more sprites. One for hearts, and 1 for the clouds. The clouds should also move in the x-directions but very slowly. Also make the maximum number of pelicans appering simmultaneosly 4 and the number of sharks 2 appearing simmultaneosly. Make the clouds also bigger compared what with you have right now and make them move horizontally.
+https://main.d2439mcumvm99l.amplifyapp.com
