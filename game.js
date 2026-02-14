@@ -997,23 +997,33 @@ class Renderer {
      * Draw start screen
      */
     drawStartScreen() {
-        if (!this.ctx) return;
-        
-        // Draw title sprite
-        if (sprites.title && sprites.title.complete) {
-            const titleWidth = 600;
-            const titleHeight = 200;
-            const titleX = (this.canvas.width - titleWidth) / 2;
-            const titleY = this.canvas.height / 2 - 150;
-            this.ctx.drawImage(sprites.title, titleX, titleY, titleWidth, titleHeight);
+            if (!this.ctx) return;
+
+            // Dibujar título
+            if (sprites.title && sprites.title.naturalWidth > 0) {
+                const titleWidth = 600;   // ajusta según tu sprite
+                const titleHeight = 200;  // ajusta según tu sprite
+                const titleX = (this.canvas.width - titleWidth) / 2;
+                const titleY = this.canvas.height / 2 - 150;
+
+                this.ctx.drawImage(
+                    sprites.title,
+                    0, 0, sprites.title.naturalWidth, sprites.title.naturalHeight, // fuente
+                    titleX, titleY, titleWidth, titleHeight                        // destino
+                );
+            }
+
+            // Texto de instrucción
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.font = '24px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(
+                'Press Space or Tap to Start',
+                this.canvas.width / 2,
+                this.canvas.height / 2 + 100
+            );
         }
-        
-        // Draw start instruction
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '24px monospace';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('Press Space or Tap to Start', this.canvas.width / 2, this.canvas.height / 2 + 100);
-    }
+
 
     /**
      * Draw game over screen
@@ -1140,6 +1150,10 @@ sprites.sharkUnderwater.src = 'img/shark_underwater.png';
 sprites.heart.src = 'img/heart.png';
 sprites.cloud.src = 'img/cloud.png';
 sprites.title.src = 'img/title.png';
+sprites.title.onload = () => { // Force a redraw once the image is ready 
+if (window.game) { 
+    window.game.render(); 
+} };
 
 // Only run canvas setup in browser environment with actual canvas element
 if (typeof document !== 'undefined') {
