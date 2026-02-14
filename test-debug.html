@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Test</title>
+    <style>
+        body { margin: 0; background: #87CEEB; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script src="game.js"></script>
+    <script>
+        // Debug: Log shark velocities
+        setInterval(() => {
+            if (window.game && window.game.entities) {
+                const sharks = window.game.entities.filter(e => e.constructor.name === 'Shark');
+                const clouds = window.game.entities.filter(e => e.constructor.name === 'Cloud');
+                console.log('Sharks:', sharks.length, sharks.map(s => ({x: s.x.toFixed(0), y: s.y.toFixed(0), vx: s.velocityX, vy: s.velocityY.toFixed(0)})));
+                console.log('Clouds:', clouds.length, clouds.map(c => ({x: c.x.toFixed(0), y: c.y.toFixed(0), vx: c.velocityX})));
+            }
+        }, 2000);
+    </script>
+</body>
+</html>

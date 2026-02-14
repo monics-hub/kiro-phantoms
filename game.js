@@ -65,12 +65,12 @@ class Kiro extends Entity {
      * @param {number} y - Initial y position
      */
     constructor(x, y) {
-        super(x, y, 40, 40); // 40x40 pixel sprite
+        super(x, y, 80, 80); // 80x80 pixel sprite (2x bigger)
         
         // Physics constants
-        this.jumpStrength = -400;  // Upward velocity when jumping (negative = up)
-        this.gravity = 1200;       // Downward acceleration (pixels/second²)
-        this.maxFallSpeed = 600;   // Maximum downward velocity (pixels/second)
+        this.jumpStrength = -800;  // Upward velocity when jumping (negative = up) - 2x faster
+        this.gravity = 2400;       // Downward acceleration (pixels/second²) - 2x faster
+        this.maxFallSpeed = 1200;   // Maximum downward velocity (pixels/second) - 2x faster
     }
 
     /**
@@ -134,10 +134,10 @@ class Pelican extends Entity {
      * @param {number} y - Initial y position (random vertical position in sky)
      */
     constructor(x, y) {
-        super(x, y, 60, 40); // 60x40 pixel sprite
+        super(x, y, 180, 120); // 180x120 pixel sprite (3x bigger)
         
         // Movement constants
-        this.speed = -200; // Move left at constant speed (pixels/second)
+        this.speed = -800; // Move left at constant speed (pixels/second) - 4x faster
         this.velocityX = this.speed;
         
         // Animation properties
@@ -191,16 +191,16 @@ class Shark extends Entity {
      * @param {number} oceanY - Y position of ocean surface
      */
     constructor(x, oceanY) {
-        super(x, oceanY, 70, 50); // 70x50 pixel sprite
-        
-        // Physics constants
-        this.initialVelocityY = -500; // Initial upward velocity (pixels/second)
-        this.gravity = 1200;          // Downward acceleration (pixels/second²)
-        this.oceanY = oceanY;         // Ocean surface Y position
-        
-        // Set initial velocity for parabolic jump
+        super(x, oceanY, 420, 300);
+
+        this.initialVelocityY = -1200; 
+        this.gravity = 1200;
+        this.oceanY = oceanY;
+
+        // Randomize horizontal speed for variety
+        this.velocityX = -300 - Math.random() * 200; 
+
         this.velocityY = this.initialVelocityY;
-        
         // Animation properties
         this.animationFrame = 0;
         this.animationSpeed = 6; // Frames per animation cycle
@@ -215,13 +215,19 @@ class Shark extends Entity {
         // Apply gravity to create parabolic arc
         this.velocityY += this.gravity * deltaTime;
         
-        // Update position based on velocity
-        super.update(deltaTime);
+        // Apply horizontal and vertical movement explicitly
+        this.x += this.velocityX * deltaTime;
+        this.y += this.velocityY * deltaTime;
         
         // Check if shark has returned to ocean surface
         // Use > instead of >= to allow collision detection at ocean surface
         if (this.y > this.oceanY) {
             this.active = false; // Remove shark when it returns to ocean
+        }
+        
+        // Deactivate if moved off screen (left side)
+        if (this.x + this.width < 0) {
+            this.active = false;
         }
         
         // Update animation frame counter
@@ -252,6 +258,57 @@ class Shark extends Entity {
 
 }
 
+// ===== Cloud (Background Element) =====
+
+/**
+ * Cloud class - Decorative background element
+ * Extends Entity with slow horizontal movement
+ */
+class Cloud extends Entity {
+    /**
+     * @param {number} x - Initial x position
+     * @param {number} y - Initial y position
+     */
+    constructor(x, y) {
+        super(x, y, 300, 180); // 300x180 pixel sprite (even bigger clouds)
+        
+        // Movement constants
+        this.speed = -30; // Move left slowly (pixels/second)
+        this.velocityX = this.speed;
+    }
+
+    /**
+     * Update cloud position
+     * @param {number} deltaTime - Time elapsed since last frame in seconds
+     */
+    update(deltaTime) {
+        // Move horizontally
+        this.x += this.velocityX * deltaTime;
+        
+        // Deactivate if moved off screen (left side)
+        if (this.x + this.width < 0) {
+            this.active = false;
+        }
+    }
+
+    /**
+     * Render cloud sprite
+     * @param {CanvasRenderingContext2D} ctx - Canvas rendering context
+     */
+    render(ctx) {
+        // Draw Cloud using sprite image
+        if (sprites.cloud && sprites.cloud.complete) {
+            ctx.drawImage(sprites.cloud, this.x, this.y, this.width, this.height);
+        } else {
+            // Fallback if image not loaded
+            ctx.fillStyle = '#FFFFFF';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            ctx.globalAlpha = 1.0;
+        }
+    }
+}
+
 // ===== Enemy Spawner =====
 
 /**
@@ -276,14 +333,17 @@ class EnemySpawner {
         // Spawn timers (track time until next spawn)
         this.pelicanTimer = 0;
         this.sharkTimer = 0;
+        this.cloudTimer = 0;
         
         // Spawn intervals (randomized on each spawn)
         this.pelicanInterval = this.getRandomPelicanInterval();
         this.sharkInterval = this.getRandomSharkInterval();
+        this.cloudInterval = this.getRandomCloudInterval();
         
         // Maximum simultaneous enemy counts
-        this.maxPelicans = 2;
-        this.maxSharks = 1;
+        this.maxPelicans = 6;
+        this.maxSharks = 3;
+        this.maxClouds = 4;
     }
 
     /**
@@ -291,7 +351,7 @@ class EnemySpawner {
      * @returns {number} Random interval in seconds
      */
     getRandomPelicanInterval() {
-        return 2 + Math.random() * 2; // 2-4 seconds
+        return 1 + Math.random() * 1; // 1-2 seconds (2x faster spawning)
     }
 
     /**
@@ -299,7 +359,15 @@ class EnemySpawner {
      * @returns {number} Random interval in seconds
      */
     getRandomSharkInterval() {
-        return 4 + Math.random() * 4; // 4-8 seconds
+        return 1.25 + Math.random() * 1.25; // 1.25-2.5 seconds (4x faster spawning)
+    }
+
+    /**
+     * Get random cloud spawn interval
+     * @returns {number} Random interval in seconds
+     */
+    getRandomCloudInterval() {
+        return 5 + Math.random() * 5; // 5-10 seconds
     }
 
     /**
@@ -310,6 +378,7 @@ class EnemySpawner {
         // Update timers
         this.pelicanTimer += deltaTime;
         this.sharkTimer += deltaTime;
+        this.cloudTimer += deltaTime;
         
         // Check if it's time to spawn a pelican
         if (this.pelicanTimer >= this.pelicanInterval) {
@@ -323,6 +392,13 @@ class EnemySpawner {
             this.spawnShark();
             this.sharkTimer = 0;
             this.sharkInterval = this.getRandomSharkInterval();
+        }
+        
+        // Check if it's time to spawn a cloud
+        if (this.cloudTimer >= this.cloudInterval) {
+            this.spawnCloud();
+            this.cloudTimer = 0;
+            this.cloudInterval = this.getRandomCloudInterval();
         }
         
         // Clean up off-screen enemies
@@ -380,6 +456,32 @@ class EnemySpawner {
         // Spawn at ocean surface
         const shark = new Shark(x, this.oceanY);
         this.gameEngine.entities.push(shark);
+    }
+
+    /**
+     * Spawn a cloud at random position
+     */
+    spawnCloud() {
+        // Count current active clouds
+        const activeClouds = this.gameEngine.entities.filter(
+            entity => entity instanceof Cloud && entity.active
+        ).length;
+        
+        // Don't spawn if at maximum count
+        if (activeClouds >= this.maxClouds) {
+            return;
+        }
+        
+        // Spawn at right edge of screen
+        const x = this.canvasWidth;
+        
+        // Random Y position in upper portion of sky (top 40% of screen)
+        const minY = 20;
+        const maxY = this.canvasHeight * 0.9;
+        const y = minY + Math.random() * (maxY - minY);
+        
+        const cloud = new Cloud(x, y);
+        this.gameEngine.entities.push(cloud);
     }
 
     /**
@@ -448,9 +550,9 @@ class CollisionSystem {
     checkAllCollisions(kiro, enemies, oceanY) {
         const collisions = [];
         
-        // Check collision with each enemy
+        // Check collision with each enemy (exclude clouds)
         for (const enemy of enemies) {
-            if (enemy.active && this.checkCollision(kiro, enemy)) {
+            if (enemy.active && !(enemy instanceof Cloud) && this.checkCollision(kiro, enemy)) {
                 collisions.push(enemy);
             }
         }
@@ -629,6 +731,11 @@ class GameEngine {
                         this.kiro.y = this.canvas.height * 0.4; // Center of sky area (80% of screen is sky)
                         this.kiro.velocityY = 0; // Reset velocity
                     }
+                    
+                    // Check for game over
+                    if (this.lives <= 0) {
+                        this.state = 'gameover';
+                    }
                 }
             }
 
@@ -671,19 +778,26 @@ class GameEngine {
      * Render playing state
      */
     renderPlaying() {
-        // Render all entities
+        // Render clouds first (background layer)
         for (const entity of this.entities) {
-            if (entity.active) {
+            if (entity.active && entity instanceof Cloud) {
+                this.renderer.drawEntity(entity);
+            }
+        }
+        
+        // Render enemies (middle layer)
+        for (const entity of this.entities) {
+            if (entity.active && !(entity instanceof Cloud)) {
                 this.renderer.drawEntity(entity);
             }
         }
 
-        // Render Kiro
+        // Render Kiro (foreground)
         if (this.kiro) {
             this.renderer.drawEntity(this.kiro);
         }
 
-        // Render lives as hearts
+        // Render lives as hearts (UI layer)
         this.renderer.drawHearts(this.lives);
     }
 
@@ -692,6 +806,30 @@ class GameEngine {
      */
     renderGameOver() {
         this.renderer.drawGameOverScreen();
+    }
+
+    /**
+     * Restart the game
+     */
+    restart() {
+        // Reset game state
+        this.state = 'playing';
+        this.lives = 5;
+        this.entities = [];
+        
+        // Reset Kiro position
+        if (this.kiro && this.canvas) {
+            this.kiro.x = 100;
+            this.kiro.y = 200;
+            this.kiro.velocityY = 0;
+        }
+        
+        // Reset enemy spawner timers
+        if (this.enemySpawner) {
+            this.enemySpawner.pelicanTimer = 0;
+            this.enemySpawner.sharkTimer = 0;
+            this.enemySpawner.cloudTimer = 0;
+        }
     }
 
     /**
@@ -715,14 +853,6 @@ class GameEngine {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
-    }
-
-    /**
-     * Restart the game
-     */
-    restart() {
-        this.init();
-        this.start();
     }
 }
 
@@ -840,7 +970,7 @@ class Renderer {
     drawHearts(lives) {
         if (!this.ctx) return;
         
-        const heartSize = 30;
+        const heartSize = 40;
         const heartSpacing = 10;
         const startX = 20;
         const startY = 20;
@@ -848,17 +978,18 @@ class Renderer {
         for (let i = 0; i < lives; i++) {
             const x = startX + i * (heartSize + heartSpacing);
             
-            // Draw simple heart shape (pixel art style)
-            this.ctx.fillStyle = '#FF0000';
-            
-            // Heart as a simple diamond/square rotated
-            this.ctx.fillRect(x + 8, startY, 14, 14);
-            this.ctx.fillRect(x + 4, startY + 4, 22, 14);
-            this.ctx.fillRect(x + 8, startY + 18, 14, 8);
-            
-            // Top bumps of heart
-            this.ctx.fillRect(x, startY + 4, 8, 8);
-            this.ctx.fillRect(x + 22, startY + 4, 8, 8);
+            // Draw heart using sprite image
+            if (sprites.heart && sprites.heart.complete) {
+                this.ctx.drawImage(sprites.heart, x, startY, heartSize, heartSize);
+            } else {
+                // Fallback if image not loaded
+                this.ctx.fillStyle = '#FF0000';
+                this.ctx.fillRect(x + 8, startY, 14, 14);
+                this.ctx.fillRect(x + 4, startY + 4, 22, 14);
+                this.ctx.fillRect(x + 8, startY + 18, 14, 8);
+                this.ctx.fillRect(x, startY + 4, 8, 8);
+                this.ctx.fillRect(x + 22, startY + 4, 8, 8);
+            }
         }
     }
 
@@ -868,13 +999,20 @@ class Renderer {
     drawStartScreen() {
         if (!this.ctx) return;
         
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '48px monospace';
-        this.ctx.textAlign = 'center';
-        this.ctx.fillText('Kiro Phantoms', this.canvas.width / 2, this.canvas.height / 2 - 50);
+        // Draw title sprite
+        if (sprites.title && sprites.title.complete) {
+            const titleWidth = 600;
+            const titleHeight = 200;
+            const titleX = (this.canvas.width - titleWidth) / 2;
+            const titleY = this.canvas.height / 2 - 150;
+            this.ctx.drawImage(sprites.title, titleX, titleY, titleWidth, titleHeight);
+        }
         
+        // Draw start instruction
+        this.ctx.fillStyle = '#FFFFFF';
         this.ctx.font = '24px monospace';
-        this.ctx.fillText('Press Space or Tap to Start', this.canvas.width / 2, this.canvas.height / 2 + 50);
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Press Space or Tap to Start', this.canvas.width / 2, this.canvas.height / 2 + 100);
     }
 
     /**
@@ -989,13 +1127,19 @@ const sprites = {
     kiro: new Image(),
     pelican: new Image(),
     shark: new Image(),
-    sharkUnderwater: new Image()
+    sharkUnderwater: new Image(),
+    heart: new Image(),
+    cloud: new Image(),
+    title: new Image()
 };
 
 sprites.kiro.src = 'img/kiro.png';
 sprites.pelican.src = 'img/pelican.png';
 sprites.shark.src = 'img/shark.png';
 sprites.sharkUnderwater.src = 'img/shark_underwater.png';
+sprites.heart.src = 'img/heart.png';
+sprites.cloud.src = 'img/cloud.png';
+sprites.title.src = 'img/title.png';
 
 // Only run canvas setup in browser environment with actual canvas element
 if (typeof document !== 'undefined') {
@@ -1004,6 +1148,7 @@ if (typeof document !== 'undefined') {
     if (canvas) {
         // Initialize game engine
         const game = new GameEngine('gameCanvas');
+        window.game = game; // Make globally accessible for debugging
         game.init();
         
         // Create Kiro instance for the game
@@ -1030,6 +1175,7 @@ if (typeof module !== 'undefined' && module.exports) {
         Kiro,
         Pelican,
         Shark,
+        Cloud,
         CollisionSystem,
         GameEngine,
         InputHandler,
